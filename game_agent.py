@@ -170,13 +170,50 @@ class MinimaxPlayer(IsolationPlayer):
         # Return the best move from the last completed search iteration
         return best_move
 
+    def max_value(self, game, depth):
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise SearchTimeout()
+
+        best_move = (-1, -1)
+        
+        best_score = float("-inf")
+        legal_moves = game.get_legal_moves()
+        for m in legal_moves:
+            _, score = self.minimax(game.forecast_move(m), depth-1)
+            if best_score < score:
+                best_score = score
+                best_move = m
+
+        if depth == self.search_depth:
+            return best_move
+        else:
+            return best_move, best_score
+        
+    def min_value(self, game, depth):
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise SearchTimeout()
+            
+        best_move = (-1, -1)
+
+        best_score = float("inf")
+        legal_moves = game.get_legal_moves()
+        for m in legal_moves:
+            _, score = self.minimax(game.forecast_move(m), depth-1)
+            if best_score > score:
+                best_score = score
+                best_move = m
+
+        if depth == self.search_depth:
+            return best_move
+        else:
+            return best_move, best_score
+        
     def minimax(self, game, depth):
         """Implement depth-limited minimax search algorithm as described in
         the lectures.
 
         This should be a modified version of MINIMAX-DECISION in the AIMA text.
         https://github.com/aimacode/aima-pseudocode/blob/master/md/Minimax-Decision.md
-
         **********************************************************************
             You MAY add additional methods to this class, or define helper
                  functions to implement the required functionality.
@@ -212,9 +249,25 @@ class MinimaxPlayer(IsolationPlayer):
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        best_move = (-1, -1)
 
+        legal_moves = game.get_legal_moves()
+        if not legal_moves or depth == 0:
+            if depth == self.search_depth:
+                return best_move
+            else:
+                return best_move, self.score(game, self)
+
+        try:
+            if game.active_player == self:
+                # My turn, take a max value's move
+                return self.max_value(game, depth)
+            else:
+                # Opponent's turn, take a min value's move
+                return self.min_value(game, depth)
+                    
+        except SearchTimeout:
+            return best_move
 
 class AlphaBetaPlayer(IsolationPlayer):
     """Game-playing agent that chooses a move using iterative deepening minimax
