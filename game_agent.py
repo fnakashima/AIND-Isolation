@@ -171,11 +171,38 @@ class MinimaxPlayer(IsolationPlayer):
         return best_move
 
     def max_value(self, game, depth):
+        """Select best move and maximum heuristic value.
+        If specified depth is the first level, returns only best move.
+
+        This is a modified version of MAX-VALUE in the AIMA text.
+        https://github.com/aimacode/aima-pseudocode/blob/master/md/Minimax-Decision.md
+
+        Parameters
+        ----------
+        game : isolation.Board
+            An instance of the Isolation game `Board` class representing the
+            current game state
+
+        depth : int
+            Depth is an integer representing the maximum number of plies to
+            search in the game tree before aborting
+
+        Returns
+        -------
+        (int, int)
+            The board coordinates of the best move found in the current search;
+            (-1, -1) if there are no legal moves
+
+        float
+            The maximum heuristic value of the current game state to my agent;
+            Negative infinity if there are no legal moves;
+            No value returned if specified depth is the first level
+
+        """
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
 
         best_move = (-1, -1)
-        
         best_score = float("-inf")
         legal_moves = game.get_legal_moves()
         for m in legal_moves:
@@ -190,11 +217,38 @@ class MinimaxPlayer(IsolationPlayer):
             return best_move, best_score
         
     def min_value(self, game, depth):
+        """Select best move and minimum heuristic value.
+        If specified depth is the first level, returns only best move.
+
+        This is a modified version of MIN-VALUE in the AIMA text.
+        https://github.com/aimacode/aima-pseudocode/blob/master/md/Minimax-Decision.md
+
+        Parameters
+        ----------
+        game : isolation.Board
+            An instance of the Isolation game `Board` class representing the
+            current game state
+
+        depth : int
+            Depth is an integer representing the maximum number of plies to
+            search in the game tree before aborting
+
+        Returns
+        -------
+        (int, int)
+            The board coordinates of the best move found in the current search;
+            (-1, -1) if there are no legal moves
+
+        float
+            The minimum heuristic value of the current game state to my agent;
+            Infinity if there are no legal moves;
+            No value returned if specified depth is the first level
+
+        """
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
             
         best_move = (-1, -1)
-
         best_score = float("inf")
         legal_moves = game.get_legal_moves()
         for m in legal_moves:
@@ -258,16 +312,13 @@ class MinimaxPlayer(IsolationPlayer):
             else:
                 return best_move, self.score(game, self)
 
-        try:
-            if game.active_player == self:
-                # My turn, take a max value's move
-                return self.max_value(game, depth)
-            else:
-                # Opponent's turn, take a min value's move
-                return self.min_value(game, depth)
-                    
-        except SearchTimeout:
-            return best_move
+        if game.active_player == self:
+            # My turn, take a max value's move
+            return self.max_value(game, depth)
+        else:
+            # Opponent's turn, take a min value's move
+            return self.min_value(game, depth)
+
 
 class AlphaBetaPlayer(IsolationPlayer):
     """Game-playing agent that chooses a move using iterative deepening minimax
