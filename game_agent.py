@@ -34,8 +34,15 @@ def custom_score(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-    # TODO: finish this function!
-    raise NotImplementedError
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    own_moves = len(game.get_legal_moves(player))
+    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    return float(own_moves - opp_moves)
 
 
 def custom_score_2(game, player):
@@ -60,9 +67,13 @@ def custom_score_2(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-    # TODO: finish this function!
-    raise NotImplementedError
+    if game.is_loser(player):
+        return float("-inf")
 
+    if game.is_winner(player):
+        return float("inf")
+
+    return float(len(game.get_legal_moves(player)))
 
 def custom_score_3(game, player):
     """Calculate the heuristic value of a game state from the point of view
@@ -86,8 +97,15 @@ def custom_score_3(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-    # TODO: finish this function!
-    raise NotImplementedError
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    own_moves = len(game.get_legal_moves(player))
+    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    return float(own_moves - opp_moves * 2)
 
 
 class IsolationPlayer:
@@ -117,6 +135,7 @@ class IsolationPlayer:
         self.score = score_fn
         self.time_left = None
         self.TIMER_THRESHOLD = timeout
+        self.debug_mode = False
 
 
 class MinimaxPlayer(IsolationPlayer):
@@ -319,7 +338,6 @@ class MinimaxPlayer(IsolationPlayer):
             # Opponent's turn, take a min value's move
             return self.min_value(game, depth)
 
-
 class AlphaBetaPlayer(IsolationPlayer):
     """Game-playing agent that chooses a move using iterative deepening minimax
     search with alpha-beta pruning. You must finish and test this player to
@@ -358,8 +376,172 @@ class AlphaBetaPlayer(IsolationPlayer):
         """
         self.time_left = time_left
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        legal_moves = game.get_legal_moves()
+        if len(legal_moves) == 0:
+            #print("return (-1, -1)")
+            return (-1, -1)
+        elif len(legal_moves) == 1:
+            #print("return only option ", legal_moves[0])
+            return legal_moves[0]
+
+        # Initialize the best move by random so that this function returns something
+        # in case the search fails due to timeout
+        best_move = random.choice(legal_moves)
+        best_score = float("-inf")
+
+        # Initte loop until hitting timer threshold
+        target_depth = 1
+        while True:
+            try:
+                # Iterative deepening search
+                move, score = self.alphabeta(game, target_depth)
+                # If score is better, take the move as a best move
+                if best_score < score:
+                    best_move = move
+                target_depth += 1
+                #print("best_move=", best_move)
+                #print("target_depth=", target_depth)
+
+            except SearchTimeout:
+                # When hitting timer threshold, stop iterative deepening search
+                break
+
+        # Return the best move from the last completed search iteration
+        return best_move
+
+    def max_value(self, game, depth, alpha, beta):
+        """Select best move and maximum heuristic value.
+        If specified depth is the first level, returns only best move.
+
+        This is a modified version of MAX-VALUE in the AIMA text.
+        https://github.com/aimacode/aima-pseudocode/blob/master/md/Alpha-Beta-Search.md
+
+        Parameters
+        ----------
+        game : isolation.Board
+            An instance of the Isolation game `Board` class representing the
+            current game state
+
+        depth : int
+            Depth is an integer representing the maximum number of plies to
+            search in the game tree before aborting
+
+        alpha : float
+            Alpha limits the lower bound of search on minimizing layers
+
+        beta : float
+            Beta limits the upper bound of search on maximizing layers
+
+        Returns
+        -------
+        (int, int)
+            The board coordinates of the best move found in the current search;
+            (-1, -1) if there are no legal moves
+
+        float
+            The maximum heuristic value of the current game state to my agent;
+            Negative infinity if there are no legal moves;
+        """
+        #if self.debug_mode: print("+++++++++++++++ max_value(start):depth:",depth, " ++++++++++++++++++")
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise SearchTimeout()
+
+        #print("max_value: depth==>", depth, ", alpha=", alpha, ", beta=", beta)
+        best_move = (-1, -1)
+        legal_moves = game.get_legal_moves()
+        if len(legal_moves) != 0:
+            best_move = random.choice(legal_moves)
+        best_score = float("-inf")
+        #print("First value ==> best_move:", best_move, ", best_score:", best_score)
+        #if self.debug_mode: print("legal_moves at depth(", depth, ")=", legal_moves)
+        for m in legal_moves:
+            #if self.debug_mode: print("******")
+            #if self.debug_mode: print("try move:", m, "at depth(", depth, ")...")
+            _, score = self.alphabeta(game.forecast_move(m), depth-1, alpha, beta)
+            #if self.debug_mode: print("move:", m, "'s score: ",score ," at depth(", depth, ")...")
+            if best_score < score:
+                best_score = score
+                best_move = m
+                #if self.debug_mode: print("updating best_move:", best_move, ", best_score:", best_score)
+            #alpha = max(alpha, best_score)
+            if alpha < best_score:
+                alpha = best_score
+                #if self.debug_mode: print("updating alpha:", alpha)
+            if beta <= alpha:
+                #if self.debug_mode: print("beta cut-off, alpha=", alpha, ", beta=", beta)
+                break
+
+        #if self.debug_mode: print("returning best_move(depth:", depth, "):", best_move, ", best_score:", best_score, "alpha=", alpha, ", beta=", beta)
+        #if self.debug_mode: print("+++++++++++++++ max_value(end):depth:",depth, " ++++++++++++++++++")
+        return best_move, best_score
+        
+    def min_value(self, game, depth, alpha, beta):
+        """Select best move and minimum heuristic value.
+        If specified depth is the first level, returns only best move.
+
+        This is a modified version of MIN-VALUE in the AIMA text.
+        https://github.com/aimacode/aima-pseudocode/blob/master/md/Alpha-Beta-Search.md
+
+        Parameters
+        ----------
+        game : isolation.Board
+            An instance of the Isolation game `Board` class representing the
+            current game state
+
+        depth : int
+            Depth is an integer representing the maximum number of plies to
+            search in the game tree before aborting
+
+        alpha : float
+            Alpha limits the lower bound of search on minimizing layers
+
+        beta : float
+            Beta limits the upper bound of search on maximizing layers
+
+        Returns
+        -------
+        (int, int)
+            The board coordinates of the best move found in the current search;
+            (-1, -1) if there are no legal moves
+
+        float
+            The minimum heuristic value of the current game state to my agent;
+            Infinity if there are no legal moves;
+        """
+        #if self.debug_mode: print("--------------------- min_value(start):depth:",depth, " -----------------------")
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise SearchTimeout()
+            
+        #if self.debug_mode: print("min_value: depth==>", depth, ", alpha=", alpha, ", beta=", beta)
+        best_move = (-1, -1)
+        legal_moves = game.get_legal_moves()
+        if len(legal_moves) != 0:
+            best_move = random.choice(legal_moves)
+        best_score = float("inf")
+        #if self.debug_mode: print("First value ==> best_move:", best_move, ", best_score:", best_score)
+        #if self.debug_mode: print("legal_moves at depth(", depth, ")=", legal_moves)
+        for m in legal_moves:
+            #if self.debug_mode: print("******")
+            #if self.debug_mode: print("try move:", m, "at depth(", depth, ")...")
+            _, score = self.alphabeta(game.forecast_move(m), depth-1, alpha, beta)
+            #if self.debug_mode: print("move:", m, "'s score: ",score ," at depth(", depth, ")...")
+            if best_score > score:
+                best_score = score
+                best_move = m
+                #if self.debug_mode: print("updating best_move:", best_move, ", best_score:", best_score)
+
+            #beta = min(beta, best_score)
+            if beta > best_score:
+                beta = best_score
+                #if self.debug_mode: print("updating beta:", beta)
+            #if self.debug_mode: print("best_move:", best_move, ", best_score:", best_score, "alpha=", alpha, ", beta=", beta)
+            if beta <= alpha:
+                #if self.debug_mode: print("alpha cut-off, alpha=", alpha, ", beta=", beta)
+                break
+
+        #if self.debug_mode: print("returning best_move(depth:", depth, "):", best_move, ", best_score:", best_score, "alpha=", alpha, ", beta=", beta)
+        #if self.debug_mode: print("--------------------- min_value(end):depth:",depth, " -----------------------")
+        return best_move, best_score
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf")):
         """Implement depth-limited minimax search with alpha-beta pruning as
@@ -395,6 +577,9 @@ class AlphaBetaPlayer(IsolationPlayer):
             The board coordinates of the best move found in the current search;
             (-1, -1) if there are no legal moves
 
+        float
+            The heuristic value of the current game state to my agent;
+
         Notes
         -----
             (1) You MUST use the `self.score()` method for board evaluation
@@ -409,5 +594,17 @@ class AlphaBetaPlayer(IsolationPlayer):
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        best_move = (-1, -1)
+        legal_moves = game.get_legal_moves()
+        if len(legal_moves) != 0:
+            best_move = random.choice(legal_moves)
+
+        if not legal_moves or depth == 0:
+           return best_move, self.score(game, self)
+
+        if game.active_player == self:
+            # My turn, take a max value's move
+            return self.max_value(game, depth, alpha, beta)
+        else:
+            # Opponent's turn, take a min value's move
+            return self.min_value(game, depth, alpha, beta)
