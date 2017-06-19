@@ -365,15 +365,17 @@ class AlphaBetaPlayer(IsolationPlayer):
             Board coordinates corresponding to a legal move; may return
             (-1, -1) if there are no available legal moves.
         """
+        self.TIMER_THRESHOLD = 15.
         self.time_left = time_left
         self.search_depth = 1
+        # print("*********************************************************************")
 
         legal_moves = game.get_legal_moves()
         if not legal_moves:
-            #print("return (-1, -1)")
+            #print("no more legal moves. Return (-1, -1)")
             return (-1, -1)
         elif len(legal_moves) == 1:
-            #print("return only option ", legal_moves[0])
+            # print("return only option ", legal_moves[0])
             return legal_moves[0]
 
         # Initialize the best move so that this function returns something
@@ -381,23 +383,31 @@ class AlphaBetaPlayer(IsolationPlayer):
         best_move = legal_moves[0]
 
         # Initte loop until hitting timer threshold
+        #search_depth_threshold = 30
         while True:
             try:
                 # Iterative deepening search
+                # print("-----------------------------")
+                # print("Iterative deepening search, search_depth:", self.search_depth)
                 move = self.alphabeta(game, self.search_depth)
                 if move == (-1, -1):
+                    #print("(-1, -1) is returned from alphabeta at depth ", self.search_depth)
                     break
                 
                 best_move = move
+                # print("updated best move:", best_move)
+                # if search_depth_threshold < self.search_depth:
+                #     break
+
                 self.search_depth += 1
-                #print("best_move=", best_move)
-                #print("target_depth=", target_depth)
 
             except SearchTimeout:
                 # When hitting timer threshold, stop iterative deepening search
+                # print("SearchTimeout occurred.")
                 break
 
         # Return the best move from the last completed search iteration
+        # print("==========> Return the best move:", best_move)
         return best_move
 
     def max_value(self, game, depth, alpha, beta):
@@ -610,6 +620,7 @@ class AlphaBetaPlayer(IsolationPlayer):
                 best_score = score
                 best_move = move
 
+            alpha = max(alpha, best_score)
         return best_move
 
         # if not legal_moves or depth == 0:

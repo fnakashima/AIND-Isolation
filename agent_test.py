@@ -8,8 +8,8 @@ import unittest
 import isolation
 import game_agent
 from importlib import reload
-from sample_players import RandomPlayer
-from sample_players import GreedyPlayer
+from sample_players import (RandomPlayer, GreedyPlayer, open_move_score,
+                            improved_score, center_score)
 
 
 class IsolationTest(unittest.TestCase):
@@ -23,8 +23,10 @@ class IsolationTest(unittest.TestCase):
 
     def test_alphabeta(self):
         #player1 = RandomPlayer()
-        player1 = game_agent.AlphaBetaPlayer()
-        player2 = GreedyPlayer()
+        player1 = game_agent.AlphaBetaPlayer(score_fn=game_agent.custom_score)
+        #player2 = GreedyPlayer()
+        #player2 = RandomPlayer()
+        player2 = game_agent.MinimaxPlayer(score_fn=open_move_score)
         game = isolation.Board(player1, player2)
 
         game.apply_move((2, 3))
