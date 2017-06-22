@@ -70,19 +70,6 @@ def custom_score_2(game, player):
     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
     return float((own_moves - 1.5*opp_moves)/(game.move_count + 1))
 
-    # own_moves = len(game.get_legal_moves(player))
-    # opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-    # return float(own_moves - 2*opp_moves)
-    # own_moves = len(game.get_legal_moves(player))
-    # opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-    # factor1 = float(own_moves - opp_moves)
-    # weight1 = 0.9
-
-    # max_spaces = game.height * game.width
-    # factor2 = (len(game.get_blank_spaces()) / max_spaces) * game.move_count
-    # weight2 = 0.1
-    # return factor1 * weight1 + factor2 * weight2
-
 def custom_score_3(game, player):
     """Calculate the heuristic value of a game state from the point of view
     of the given player.
@@ -111,23 +98,6 @@ def custom_score_3(game, player):
     own_moves = len(game.get_legal_moves(player))
     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
     return float((own_moves - opp_moves)/(game.move_count + 1))
-    # own_moves = len(game.get_legal_moves(player))
-    # opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-    # factor1 = float(own_moves - opp_moves)
-    # weight1 = 0.7
-
-    # max_spaces = game.height * game.width
-    # factor2 = (len(game.get_blank_spaces()) / max_spaces) * game.move_count
-    # weight2 = 0.3
-    # return factor1 * weight1 + factor2 * weight2
-
-    # http://isolation-game-ai.herokuapp.com/Isolation-ProjectPaper.pdf
-    #  (number of current player's moves - number of enemy's moves)/(num empty spaces +1)
-    # own_moves = len(game.get_legal_moves(player))
-    # opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-    # empty_spaces = len(game.get_blank_spaces())
-    # return float((own_moves - 2*opp_moves)/(empty_spaces + 1))
-
 
 class IsolationPlayer:
     """Base class for minimax and alphabeta agents -- this class is never
@@ -381,15 +351,11 @@ class AlphaBetaPlayer(IsolationPlayer):
         """
         self.time_left = time_left
         self.search_depth = 1
-        # print("*********************************************************************")
 
         legal_moves = game.get_legal_moves()
-        #print("legal_moves=", legal_moves)
         if not legal_moves:
-            #print("no more legal moves. Return (-1, -1)")
             return (-1, -1)
         elif len(legal_moves) == 1:
-            # print("return only option ", legal_moves[0])
             return legal_moves[0]
 
         first_move, is_first_move = self.get_first_move(game)
@@ -405,11 +371,8 @@ class AlphaBetaPlayer(IsolationPlayer):
         while True:
             try:
                 # Iterative deepening search
-                # print("-----------------------------")
-                # print("Iterative deepening search, search_depth:", self.search_depth)
                 move = self.alphabeta(game, self.search_depth)
                 if move == (-1, -1):
-                    #print("(-1, -1) is returned from alphabeta at depth ", self.search_depth)
                     break
                 
                 best_move = move
@@ -425,13 +388,24 @@ class AlphaBetaPlayer(IsolationPlayer):
                 break
 
         # Return the best move from the last completed search iteration
-        #print("==========> Return the best move:", best_move)
         return best_move
 
     def get_first_move(self, game):
         """Select first move from the good opening book based on the lesson Solving 5x5 Isolation from Malcolm
             1. Move to the centre if possible
             2. Move to next to opponent
+
+        Parameters
+        ----------
+        game : `isolation.Board`
+            An instance of `isolation.Board` encoding the current state of the
+            game (e.g., player locations and blocked cells).
+
+        Returns
+        -------
+        (int, int)
+            Board coordinates corresponding to a legal move
+        
         """
         if game.move_count > 1:
             return (-1,-1), False
@@ -485,42 +459,23 @@ class AlphaBetaPlayer(IsolationPlayer):
             Negative infinity if there are no legal moves;
 
         """
-        #if self.debug_mode: print("+++++++++++++++ max_value(start):depth:",depth, " ++++++++++++++++++")
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
 
-        #print("max_value: depth==>", depth, ", alpha=", alpha, ", beta=", beta)
         legal_moves = game.get_legal_moves()
         if not legal_moves or depth <= 0:
             return self.score(game, self)
 
         best_score = float("-inf")
-        #print("First value ==> best_move:", best_move, ", best_score:", best_score)
-        #if self.debug_mode: print("legal_moves at depth(", depth, ")=", legal_moves)
         for move in legal_moves:
-            #if self.debug_mode: print("******")
-            #if self.debug_mode: print("try move:", m, "at depth(", depth, ")...")
             best_score = max(best_score, self.min_value(game.forecast_move(move), depth-1, alpha, beta))
-            #if self.debug_mode: print("move:", m, "'s score: ",score ," at depth(", depth, ")...")
 
             # If score is greater than the best score, take the move and score
-            # if best_score < score:
-            #     best_score = score
-                #if self.debug_mode: print("updating best_move:", best_move, ", best_score:", best_score)
             if best_score >= beta:
-                #if self.debug_mode: print("beta cut-off, alpha=", alpha, ", beta=", beta)
                 return best_score
 
             alpha = max(alpha, best_score)
-            # if alpha < best_score:
-            #     alpha = best_score
-                #if self.debug_mode: print("updating alpha:", alpha)
-            # if beta <= alpha:
-            #     #if self.debug_mode: print("beta cut-off, alpha=", alpha, ", beta=", beta)
-            #     break
 
-        #if self.debug_mode: print("returning best_move(depth:", depth, "):", best_move, ", best_score:", best_score, "alpha=", alpha, ", beta=", beta)
-        #if self.debug_mode: print("+++++++++++++++ max_value(end):depth:",depth, " ++++++++++++++++++")
         return best_score
         
     def min_value(self, game, depth, alpha, beta):
@@ -557,44 +512,22 @@ class AlphaBetaPlayer(IsolationPlayer):
             Infinity if there are no legal moves;
 
         """
-        #if self.debug_mode: print("--------------------- min_value(start):depth:",depth, " -----------------------")
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
             
-        #if self.debug_mode: print("min_value: depth==>", depth, ", alpha=", alpha, ", beta=", beta)
         legal_moves = game.get_legal_moves()
         if not legal_moves or depth <= 0:
             return self.score(game, self)
 
         best_score = float("inf")
-        #if self.debug_mode: print("First value ==> best_move:", best_move, ", best_score:", best_score)
-        #if self.debug_mode: print("legal_moves at depth(", depth, ")=", legal_moves)
         for move in legal_moves:
-            #if self.debug_mode: print("******")
-            #if self.debug_mode: print("try move:", m, "at depth(", depth, ")...")
             best_score = min(best_score, self.max_value(game.forecast_move(move), depth-1, alpha, beta))
-            #if self.debug_mode: print("move:", m, "'s score: ",score ," at depth(", depth, ")...")
-
-            # If score is less than the best score, take the move and score
-            # if best_score > score:
-            #     best_score = score
-                #if self.debug_mode: print("updating best_move:", best_move, ", best_score:", best_score)
 
             if best_score <= alpha:
-                #if self.debug_mode: print("alpha cut-off, alpha=", alpha, ", beta=", beta)
                 return best_score
 
             beta = min(beta, best_score)
-            # if beta > best_score:
-            #     beta = best_score
-                #if self.debug_mode: print("updating beta:", beta)
-            #if self.debug_mode: print("best_move:", best_move, ", best_score:", best_score, "alpha=", alpha, ", beta=", beta)
-            # if beta <= alpha:
-            #     #if self.debug_mode: print("alpha cut-off, alpha=", alpha, ", beta=", beta)
-            #     break
 
-        #if self.debug_mode: print("returning best_move(depth:", depth, "):", best_move, ", best_score:", best_score, "alpha=", alpha, ", beta=", beta)
-        #if self.debug_mode: print("--------------------- min_value(end):depth:",depth, " -----------------------")
         return best_score
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf")):
@@ -650,9 +583,7 @@ class AlphaBetaPlayer(IsolationPlayer):
 
         best_move = (-1, -1)
         legal_moves = game.get_legal_moves()
-        #print("legal_moves(alphabeta)=", legal_moves)
         if not legal_moves:
-            #print("no more legal moves. Return (-1, -1)")
             return best_move
 
         # Initialise a best move with the first option
@@ -667,5 +598,4 @@ class AlphaBetaPlayer(IsolationPlayer):
                 best_move = move
 
             alpha = max(alpha, best_score)
-        #print("====> Return the best move(alphabeta):", best_move)
         return best_move
