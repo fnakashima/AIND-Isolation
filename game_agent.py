@@ -39,7 +39,7 @@ def custom_score(game, player):
 
     own_moves = len(game.get_legal_moves(player))
     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-    return float(own_moves - 2*opp_moves)
+    return float(own_moves - 1.5*opp_moves)
 
 def custom_score_2(game, player):
     """Calculate the heuristic value of a game state from the point of view
@@ -68,12 +68,20 @@ def custom_score_2(game, player):
 
     own_moves = len(game.get_legal_moves(player))
     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-    factor1 = float(own_moves - 2*opp_moves)
-    weight1 = 0.9
+    return float((own_moves - 1.5*opp_moves)/(game.move_count + 1))
 
-    factor2 = len(game.get_blank_spaces()) * game.move_count
-    weight2 = 0.1
-    return factor1 * weight1 + factor2 * weight2
+    # own_moves = len(game.get_legal_moves(player))
+    # opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    # return float(own_moves - 2*opp_moves)
+    # own_moves = len(game.get_legal_moves(player))
+    # opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    # factor1 = float(own_moves - opp_moves)
+    # weight1 = 0.9
+
+    # max_spaces = game.height * game.width
+    # factor2 = (len(game.get_blank_spaces()) / max_spaces) * game.move_count
+    # weight2 = 0.1
+    # return factor1 * weight1 + factor2 * weight2
 
 def custom_score_3(game, player):
     """Calculate the heuristic value of a game state from the point of view
@@ -100,12 +108,25 @@ def custom_score_3(game, player):
     if game.is_winner(player) or game.is_loser(player):
         return game.utility(player)
 
-    # http://isolation-game-ai.herokuapp.com/Isolation-ProjectPaper.pdf
-    #  (number of current player's moves - number of enemy's moves)/(num empty spaces +1)
     own_moves = len(game.get_legal_moves(player))
     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-    empty_spaces = len(game.get_blank_spaces())
-    return float((own_moves - opp_moves)/(empty_spaces + 1))
+    return float((own_moves - opp_moves)/(game.move_count + 1))
+    # own_moves = len(game.get_legal_moves(player))
+    # opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    # factor1 = float(own_moves - opp_moves)
+    # weight1 = 0.7
+
+    # max_spaces = game.height * game.width
+    # factor2 = (len(game.get_blank_spaces()) / max_spaces) * game.move_count
+    # weight2 = 0.3
+    # return factor1 * weight1 + factor2 * weight2
+
+    # http://isolation-game-ai.herokuapp.com/Isolation-ProjectPaper.pdf
+    #  (number of current player's moves - number of enemy's moves)/(num empty spaces +1)
+    # own_moves = len(game.get_legal_moves(player))
+    # opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    # empty_spaces = len(game.get_blank_spaces())
+    # return float((own_moves - 2*opp_moves)/(empty_spaces + 1))
 
 
 class IsolationPlayer:
