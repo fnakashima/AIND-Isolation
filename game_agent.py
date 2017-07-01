@@ -97,7 +97,13 @@ def custom_score_3(game, player):
 
     own_moves = len(game.get_legal_moves(player))
     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-    return float((own_moves - opp_moves)/(game.move_count + 1))
+    close_spaces = game.height * game.width - len(game.get_blank_spaces())
+    if player == game.inactive_player and opp_moves == 0:
+        return float("inf")
+    if player == game.active_player and own_moves == 0:
+        return float("-inf")
+
+    return -(opp_moves + 0.5) / (own_moves + 0.5) * close_spaces
 
 class IsolationPlayer:
     """Base class for minimax and alphabeta agents -- this class is never
